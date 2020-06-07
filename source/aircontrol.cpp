@@ -29,6 +29,7 @@
 #include "Replay.h"
 #include "Scan.h"
 #include "Target.h"
+#include "ManchesterCodeTarget.h"
 #include "Task.h"
 #include "Types.h"
 #include "Version.h"
@@ -51,6 +52,7 @@ static void printUsage(void) {
         << "  -r <file>\tReplay given air scan dump" << std::endl
         << "  -s <ms>\tAir scan for given period" << std::endl
         << "  -t <target>\tExecute target configuration" << std::endl
+        << "  -m <code>\tSend manchestercode" << std::endl
         << std::endl
         << "Copyright (C) 2014-2019 Ralf Dauberschmidt <ralf@dauberschmidt.de>"
         << std::endl << std::endl;
@@ -71,7 +73,7 @@ int main(int argc, char **argv) {
     // Parse command line arguments
     int option;
     opterr = 0;
-    while ((option = getopt(argc, argv, "c:d:g:lr:s:t:")) != -1) {
+    while ((option = getopt(argc, argv, "c:d:g:lr:s:t:m:")) != -1) {
         switch (option) {
             case 'c':
                 configuration.setLocation(std::string(optarg));
@@ -128,13 +130,23 @@ int main(int argc, char **argv) {
                     std::string(optarg)));
                 break;
 
+            case 'm':
+                if (task != nullptr) {
+                    std::cerr << "Error: Multiple commands are not supported "
+                        "(maybe omit parameter '-m')" << std::endl;
+                    return EXIT_FAILURE;
+                }
+                task = std::make_unique<ManchesterCodeTarget>(ManchesterCodeTarget(configuration,
+                    std::string(optarg)));
+                break;
+
             default:
                 printUsage();
                 return EXIT_FAILURE;
         }
     }
     if (task == nullptr) {
-        std::cerr << "Error: Either parameter '-r', '-s' or '-t' is mandatory"
+        std::cerr << "Error: Either parameter '-r', '-s', '-t' or '-m' is mandatory"
             << std::endl;
         printUsage();
         return EXIT_FAILURE;
